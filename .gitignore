@@ -1,0 +1,14 @@
+# python compiled files
+*.py[co]
+__pycache__/
+
+# pytest cache
+/.pytest_cache/
+
+# python packages
+/dist/
+/build/
+*.egg-info
+
+# editor configuration
+.vscode/
