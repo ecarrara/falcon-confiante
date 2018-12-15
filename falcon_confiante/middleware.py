@@ -4,6 +4,37 @@ from jsonschema.validators import Draft4Validator
 from jsonschema.exceptions import ValidationError
 
 
+class OpenApiAuthenticationMiddleware(object):
+
+    __slots__ = ("openapi_spec", "auth_fn", "default_security_schemes")
+
+    def __init__(self, openapi_spec: dict, auth_fn, strict_mode: bool = True):
+        self.openapi_spec = openapi_spec
+        self.auth_fn = auth_fn
+        self.default_security_schemes = openapi_spec.get("security")
+
+    def process_resource(self, req, resp, resource, params):
+        path, http_method = req.uri_template, req.method.lower()
+
+        try:
+            security_schema = self.openapi_spec["paths"][path][http_method].get(
+                "security", self.default_security_schemes
+            )
+
+            if security_schema:
+                user = self.auth_fn(req, resp, resource, params)
+                if user is None:
+                    raise OpenApiAutheticationError(falcon.HTTP_UNAUTHORIZED)
+
+                req.context["user"] = user
+        except KeyError as exc:
+            if not self.strict_mode:
+                return
+            raise RuntimeError(
+                f"Error {http_method.upper()} {path} not defined in Open API spec"
+            ) from exc
+
+
 class OpenApiSchemaValidationMiddleware(object):
 
     DEFAULT_CONTENT_TYPE = "application/json"
@@ -117,10 +148,7 @@ class OpenApiSchemaValidationMiddleware(object):
         return {"message": err.message, "field": f'.{".".join(err.absolute_path)}'}
 
 
-class OpenApiSchemaError(falcon.HTTPError):
-
-    HTTP_RESPONSE_ERROR = "593 Bad Response"
-
+class OpenApiError(falcon.HTTPError):
     def __init__(self, status, errors=None, **kwargs):
         super().__init__(status, **kwargs)
         self.errors = errors
@@ -131,3 +159,12 @@ class OpenApiSchemaError(falcon.HTTPError):
         if self.errors:
             obj["errors"] = self.errors
         return obj
+
+
+class OpenApiAutheticationError(OpenApiError):
+    pass
+
+
+class OpenApiSchemaError(OpenApiError):
+
+    HTTP_RESPONSE_ERROR = "593 Bad Response"

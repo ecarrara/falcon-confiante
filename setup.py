@@ -13,7 +13,7 @@ with io.open("falcon_confiante/__init__.py", "rt", encoding="utf8") as f:
 
 setuptools.setup(
     name="falcon-confiante",
-    version="0.0.1",
+    version=version,
     author="Erle Carrara",
     author_email="carrara.erle@gmail.com",
     description="Custom router an middleware to Spec Driven Development using OpenAPI v3 and Falcon.",
