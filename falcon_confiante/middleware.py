@@ -6,12 +6,18 @@ from jsonschema.exceptions import ValidationError
 
 class OpenApiAuthenticationMiddleware(object):
 
-    __slots__ = ("openapi_spec", "auth_fn", "default_security_schemes")
+    __slots__ = (
+        "openapi_spec",
+        "auth_fn",
+        "default_security_schemes",
+        "strict_mode"
+    )
 
     def __init__(self, openapi_spec: dict, auth_fn, strict_mode: bool = True):
         self.openapi_spec = openapi_spec
         self.auth_fn = auth_fn
         self.default_security_schemes = openapi_spec.get("security")
+        self.strict_mode = strict_mode
 
     def process_resource(self, req, resp, resource, params):
         path, http_method = req.uri_template, req.method.lower()
