@@ -151,7 +151,7 @@ class OpenApiSchemaValidationMiddleware(object):
         return self.validators[(path, http_method, status_code)]
 
     def _format_validation_error(self, err):
-        return {"message": err.message, "field": f'.{".".join(err.absolute_path)}'}
+        return {"message": err.message, "field": f'.{".".join(map(str, err.absolute_path))}'}
 
 
 class OpenApiError(falcon.HTTPError):
