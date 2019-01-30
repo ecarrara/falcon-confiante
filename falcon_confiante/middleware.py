@@ -6,12 +6,7 @@ from jsonschema.exceptions import ValidationError
 
 class OpenApiAuthenticationMiddleware(object):
 
-    __slots__ = (
-        "openapi_spec",
-        "auth_fn",
-        "default_security_schemes",
-        "strict_mode"
-    )
+    __slots__ = ("openapi_spec", "auth_fn", "default_security_schemes", "strict_mode")
 
     def __init__(self, openapi_spec: dict, auth_fn, strict_mode: bool = True):
         self.openapi_spec = openapi_spec
@@ -92,13 +87,13 @@ class OpenApiSchemaValidationMiddleware(object):
         if req.uri_template is None:
             return  # not route matched
 
-        media = resp.media
+        handler = resp.options.media_handlers.find_by_media_type(
+            resp.content_type, resp.options.default_media_type
+        )
 
+        media = resp.media
         if media is None and not req_succeeded:
             # falcon HTTP errors not set response.media property!
-            handler = resp.options.media_handlers.find_by_media_type(
-                resp.content_type, resp.options.default_media_type
-            )
             media = handler.deserialize(resp.body.encode("utf-8"))
 
         path, http_method, status_code = (
@@ -110,10 +105,12 @@ class OpenApiSchemaValidationMiddleware(object):
             return  # not route matched!
 
         try:
+            response_payload = handler.serialize(media)
+
             validator = self.get_validator_for_response(path, http_method, status_code)
             errors = [
                 self._format_validation_error(err)
-                for err in validator.iter_errors(media)
+                for err in validator.iter_errors(handler.deserialize(response_payload))
             ]
             if errors:
                 raise OpenApiSchemaError(OpenApiSchemaError.HTTP_RESPONSE_ERROR, errors)
@@ -151,7 +148,10 @@ class OpenApiSchemaValidationMiddleware(object):
         return self.validators[(path, http_method, status_code)]
 
     def _format_validation_error(self, err):
-        return {"message": err.message, "field": f'.{".".join(map(str, err.absolute_path))}'}
+        return {
+            "message": err.message,
+            "field": f'.{".".join(map(str, err.absolute_path))}',
+        }
 
 
 class OpenApiError(falcon.HTTPError):
