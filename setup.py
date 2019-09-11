@@ -21,7 +21,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ecarrara/falcon-confiante",
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
-    install_requires=["jsonschema>=2.6.0", "falcon>=1.4.0"],
+    install_requires=["jsonschema>=2.6.0", "falcon>=1.4.0,<2.0.0"],
     tests_require=["pytest", "pyyaml"],
     packages=["falcon_confiante"],
     keywords=["falcon", "openapi", "api", "swagger"],
