@@ -16,6 +16,8 @@ class OpenApiAuthenticationMiddleware(object):
 
     def process_resource(self, req, resp, resource, params):
         path, http_method = req.uri_template, req.method.lower()
+        if http_method == 'options':
+            return
 
         try:
             security_schema = self.openapi_spec["paths"][path][http_method].get(
@@ -62,6 +64,8 @@ class OpenApiSchemaValidationMiddleware(object):
 
     def process_resource(self, req, resp, resource, params):
         path, http_method = req.uri_template, req.method.lower()
+        if http_method == 'options':
+            return
 
         try:
             validator = self.get_validator_for_request_body(path, http_method)
@@ -81,6 +85,9 @@ class OpenApiSchemaValidationMiddleware(object):
             ) from exc
 
     def process_response(self, req, resp, resource, req_succeeded):
+        if req.method.lower() == 'options':
+            return
+
         if self.validate_response is False:
             return
 
