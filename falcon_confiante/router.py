@@ -11,13 +11,16 @@ class OpenApiRouter(CompiledRouter):
 
     __slots__ = ("root_package", "resources", "strict_mode", "mapping")
 
-    def __init__(self, package, openapi_spec: dict, strict_mode: bool = True):
+    def __init__(self, package, openapi_spec: dict, strict_mode: bool = True, options_handle = None):
         super().__init__()
 
         self.root_package = package
         self.resources = {}
         self.strict_mode = True
-        self.mapping = defaultdict(lambda: {})  # resource -> method -> fn
+        mapping_tmpl = {}
+        if options_handle:
+            mapping_tmpl['OPTIONS'] = options_handle
+        self.mapping = defaultdict(lambda: mapping_tmpl.copy())  # resource -> method -> fn
 
         for path, http_methods in openapi_spec["paths"].items():
             for http_method, defn in http_methods.items():
